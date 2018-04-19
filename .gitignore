@@ -40,3 +40,7 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 cmake_install.cmake
 depcomp
+/Build/
+/Debug/
+/Release/
+

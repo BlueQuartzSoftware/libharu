@@ -12,7 +12,14 @@
 # =======================================================================
 # libharu project
 # =======================================================================
-project(libharu C)
+
+if(${CMAKE_MAJOR_VERSION} STREQUAL "3")
+  # CMake 3.0 introduces some OS X RPath policies
+  cmake_policy(SET CMP0042 NEW)
+endif()
+
+project(libharu LANGUAGES C)
+set(libharu_VERSION 2.2.0.0)
 
 # determine compiler name
 set(COMPILER_LABEL "unknown")
@@ -31,27 +38,57 @@ set(LIBHPDF_VERSION ${LIBHPDF_MAJOR}.${LIBHPDF_MINOR}.${LIBHPDF_PATCH})
 set(LIBHPDF_DESCRIPTION "libHaru is a free, cross platform, open source library for generating PDF files.")
 set(LIBHPDF_PACKAGE_NAME "libHaru-${LIBHPDF_VERSION}-${COMPILER_LABEL}")
 
-# we want cmake version 2.4.8 at least
-cmake_minimum_required(VERSION 2.4.8 FATAL_ERROR)
+# we want cmake version 3.11.0 at least
+cmake_minimum_required(VERSION 3.11.0 FATAL_ERROR)
 
 # Location where the haru cmake build system first looks for cmake modules
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-# set library name, msvc does not append 'lib' automatically
-if(MSVC)
- set(LIBHPDF_NAME lib)
- set(CMAKE_DEBUG_POSTFIX "d")
-endif(MSVC)
-set(LIBHPDF_NAME ${LIBHPDF_NAME}hpdf)
-set(LIBHPDF_NAME_STATIC ${LIBHPDF_NAME}s)
+# ---------- Setup output Directories -------------------------
+if(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+    ${libharu_BINARY_DIR}/Bin
+    CACHE PATH
+    "Single Directory for all Libraries"
+    )
+endif()
+
+# --------- Setup the Executable output Directory -------------
+if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    ${libharu_BINARY_DIR}/Bin
+    CACHE PATH
+    "Single Directory for all Executables."
+    )
+endif()
+
+# --------- Setup the Executable output Directory -------------
+if(NOT DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+    ${libharu_BINARY_DIR}/Bin
+    CACHE PATH
+    "Single Directory for all static libraries."
+    )
+endif()
+
+#Enable use of Solution Folders
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
+# Build shared libraries
+OPTION(LIBHPDF_BUILD_SHARED_LIBS "libHaru: Build Shared Libraries" OFF)
+if(WIN32)
+  set(LIBHPDF_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+endif()
+set(LIB_TYPE STATIC)
+if(LIBHPDF_BUILD_SHARED_LIBS)
+    set(LIB_TYPE SHARED)
+endif(LIBHPDF_BUILD_SHARED_LIBS)
 
 # =======================================================================
 # command line options
 # =======================================================================
-option(LIBHPDF_SHARED "Build shared lib" YES)
-option(LIBHPDF_STATIC "Build static lib" YES)
 option(LIBHPDF_EXAMPLES "Build libharu examples" NO)
-option(DEVPAK "Create DevPackage" NO)
+option(LIBHPDF_DEVPAK "Create DevPackage" NO)
 
 # Enable exceptions on linux if required
 # (eg if you are using libharu in a C++ environment,
@@ -65,18 +102,14 @@ if (CMAKE_COMPILER_IS_GNUCC OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
    endif (LIBHPDF_ENABLE_EXCEPTIONS)
 endif ()
 
-if(DEVPAK AND NOT WIN32)
-  message( STATUS "DevPackage only available for Win32. Set DEVPAK to OFF." )
-  set(DEVPAK OFF)
-endif(DEVPAK AND NOT WIN32)
-if(DEVPAK AND LIBHPDF_EXAMPLES)
+if(LIBHPDF_DEVPAK AND NOT WIN32)
+  message( STATUS "DevPackage only available for Win32. Set LIBHPDF_DEVPAK to OFF." )
+  set(LIBHPDF_DEVPAK OFF)
+endif(LIBHPDF_DEVPAK AND NOT WIN32)
+if(LIBHPDF_DEVPAK AND LIBHPDF_EXAMPLES)
   message( STATUS "Examples are not build for DevPackage. Set LIBHPDF_EXAMPLES to OFF." )
   set(LIBHPDF_EXAMPLES OFF)
-endif(DEVPAK AND LIBHPDF_EXAMPLES)
-
-if(BUILD_SHARED_LIBS)
-  set(LIBHPDF_SHARED ON)
-endif(BUILD_SHARED_LIBS)
+endif(LIBHPDF_DEVPAK AND LIBHPDF_EXAMPLES)
 
 # =======================================================================
 # look for headers and libraries
@@ -110,7 +143,7 @@ endif(PNG_FOUND)
 if(MSVC_VERSION GREATER 1399)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE)
 endif(MSVC_VERSION GREATER 1399)
-include_directories(${CMAKE_SOURCE_DIR}/include)
+#include_directories(${CMAKE_SOURCE_DIR}/include)
 
 
 # these are options
@@ -149,18 +182,18 @@ endif (NOT ZLIB_FOUND)
 
 # create hpdf_config.h
 configure_file(
-  ${CMAKE_SOURCE_DIR}/include/hpdf_config.h.cmake
-  ${CMAKE_BINARY_DIR}/include/hpdf_config.h
+  ${libharu_SOURCE_DIR}/include/hpdf_config.h.cmake
+  ${libharu_BINARY_DIR}/include/hpdf_config.h
 )
-include_directories(${CMAKE_BINARY_DIR}/include)
+#include_directories(${CMAKE_BINARY_DIR}/include)
 
 # create DevPackage file
-if(DEVPAK)
+if(LIBHPDF_DEVPAK)
   configure_file(
-    ${CMAKE_SOURCE_DIR}/libharu.DevPackage.cmake
-    ${CMAKE_BINARY_DIR}/libharu.DevPackage
+    ${libharu_SOURCE_DIR}/libharu.DevPackage.cmake
+    ${libharu_BINARY_DIR}/libharu.DevPackage
   )
-endif(DEVPAK)
+endif(LIBHPDF_DEVPAK)
 # =======================================================================
 # create library and demos
 # =======================================================================
@@ -172,37 +205,37 @@ add_subdirectory(demo)
 # =======================================================================
 set(
   haru_HDRS
-    include/hpdf.h
-    include/hpdf_types.h
-    include/hpdf_consts.h 
-    include/hpdf_version.h
-    include/hpdf_annotation.h
-    include/hpdf_catalog.h
-    include/hpdf_conf.h
-    include/hpdf_destination.h
-    include/hpdf_doc.h
-    include/hpdf_encoder.h
-    include/hpdf_encrypt.h
-    include/hpdf_encryptdict.h
-    include/hpdf_error.h
-    include/hpdf_ext_gstate.h
-    include/hpdf_font.h
-    include/hpdf_fontdef.h
-    include/hpdf_gstate.h
-    include/hpdf_image.h
-    include/hpdf_info.h
-    include/hpdf_list.h
-    include/hpdf_mmgr.h
-    include/hpdf_objects.h
-    include/hpdf_outline.h
-    include/hpdf_pages.h
-    include/hpdf_page_label.h
-    include/hpdf_streams.h
-    include/hpdf_u3d.h
-    include/hpdf_utils.h
-    include/hpdf_pdfa.h
-    include/hpdf_3dmeasure.h
-    include/hpdf_exdata.h
+    ${libharu_SOURCE_DIR}/include/hpdf.h
+    ${libharu_SOURCE_DIR}/include/hpdf_types.h
+    ${libharu_SOURCE_DIR}/include/hpdf_consts.h 
+    ${libharu_SOURCE_DIR}/include/hpdf_version.h
+    ${libharu_SOURCE_DIR}/include/hpdf_annotation.h
+    ${libharu_SOURCE_DIR}/include/hpdf_catalog.h
+    ${libharu_SOURCE_DIR}/include/hpdf_conf.h
+    ${libharu_SOURCE_DIR}/include/hpdf_destination.h
+    ${libharu_SOURCE_DIR}/include/hpdf_doc.h
+    ${libharu_SOURCE_DIR}/include/hpdf_encoder.h
+    ${libharu_SOURCE_DIR}/include/hpdf_encrypt.h
+    ${libharu_SOURCE_DIR}/include/hpdf_encryptdict.h
+    ${libharu_SOURCE_DIR}/include/hpdf_error.h
+    ${libharu_SOURCE_DIR}/include/hpdf_ext_gstate.h
+    ${libharu_SOURCE_DIR}/include/hpdf_font.h
+    ${libharu_SOURCE_DIR}/include/hpdf_fontdef.h
+    ${libharu_SOURCE_DIR}/include/hpdf_gstate.h
+    ${libharu_SOURCE_DIR}/include/hpdf_image.h
+    ${libharu_SOURCE_DIR}/include/hpdf_info.h
+    ${libharu_SOURCE_DIR}/include/hpdf_list.h
+    ${libharu_SOURCE_DIR}/include/hpdf_mmgr.h
+    ${libharu_SOURCE_DIR}/include/hpdf_objects.h
+    ${libharu_SOURCE_DIR}/include/hpdf_outline.h
+    ${libharu_SOURCE_DIR}/include/hpdf_pages.h
+    ${libharu_SOURCE_DIR}/include/hpdf_page_label.h
+    ${libharu_SOURCE_DIR}/include/hpdf_streams.h
+    ${libharu_SOURCE_DIR}/include/hpdf_u3d.h
+    ${libharu_SOURCE_DIR}/include/hpdf_utils.h
+    ${libharu_SOURCE_DIR}/include/hpdf_pdfa.h
+    ${libharu_SOURCE_DIR}/include/hpdf_3dmeasure.h
+    ${libharu_SOURCE_DIR}/include/hpdf_exdata.h
     ${CMAKE_BINARY_DIR}/include/hpdf_config.h
 )
 
@@ -211,17 +244,17 @@ install(FILES ${haru_HDRS} DESTINATION include)
 
 # install various files
 install(FILES README CHANGES INSTALL DESTINATION .)
-if(NOT DEVPAK)
+if(NOT LIBHPDF_DEVPAK)
   install(DIRECTORY if DESTINATION .)
-endif(NOT DEVPAK)
-if(DEVPAK)
+endif(NOT LIBHPDF_DEVPAK)
+if(LIBHPDF_DEVPAK)
   install(FILES ${CMAKE_BINARY_DIR}/libharu.DevPackage DESTINATION .)
-endif(DEVPAK)
+endif(LIBHPDF_DEVPAK)
 
 # =======================================================================
 # print out some information
 # =======================================================================
-summary()
+#summary()
 
 # =======================================================================
 # packing stuff
