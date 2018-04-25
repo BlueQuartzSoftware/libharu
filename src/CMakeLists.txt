@@ -88,7 +88,7 @@ add_library(${targetName} ${LIB_TYPE} ${LIBHPDF_SRCS})
 target_include_directories(${targetName}
 				PRIVATE
 					${libharu_SOURCE_DIR}/include
-				PUBLIC
+				PRIVATE
 					${libharu_BINARY_DIR}/include
 )
 
@@ -156,12 +156,12 @@ write_basic_package_version_file(
   VERSION ${libharu_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
-if(LIBHPDF_SHARED)
+# if(LIBHPDF_SHARED)
   export(EXPORT libharuTargets
     FILE "${CMAKE_CURRENT_BINARY_DIR}/libharu/libharuTargets.cmake"
     NAMESPACE libharu::
   )
-endif()
+# endif()
 
 configure_file(cmake/libharuConfig.cmake
   "${CMAKE_CURRENT_BINARY_DIR}/libharu/libharuConfig.cmake"
@@ -170,7 +170,7 @@ configure_file(cmake/libharuConfig.cmake
 
 set(ConfigPackageLocation cmake/libharu)
 
-if(LIBHPDF_SHARED)
+# if(LIBHPDF_SHARED)
   install(EXPORT libharuTargets
     FILE
 			libharuTargets.cmake
@@ -180,7 +180,7 @@ if(LIBHPDF_SHARED)
       ${ConfigPackageLocation}
   )
 
-endif()
+# endif()
 
 install(
   FILES
