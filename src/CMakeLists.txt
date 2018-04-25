@@ -87,14 +87,16 @@ set(targetName hpdf)
 add_library(${targetName} ${LIB_TYPE} ${LIBHPDF_SRCS})
 target_include_directories(${targetName}
 				PRIVATE
-				${libharu_SOURCE_DIR}/include
+					${libharu_SOURCE_DIR}/include
+				PUBLIC
+					${libharu_BINARY_DIR}/include
 )
 
 if( NOT LIBHPDF_BUILD_SHARED_LIBS AND MSVC)
-set_target_properties( ${targetName}
-	PROPERTIES
-	DEBUG_OUTPUT_NAME lib${targetName}
-	RELEASE_OUTPUT_NAME lib${targetName}  )
+	set_target_properties( ${targetName}
+		PROPERTIES
+		DEBUG_OUTPUT_NAME lib${targetName}
+		RELEASE_OUTPUT_NAME lib${targetName}  )
 endif()
     #-- Set the Debug and Release names for the libraries
 set_target_properties( ${targetName}
