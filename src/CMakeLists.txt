@@ -86,6 +86,8 @@ endif()
 set(targetName hpdf)
 add_library(${targetName} ${LIB_TYPE} ${LIBHPDF_SRCS})
 target_include_directories(${targetName}
+        PUBLIC
+          $<INSTALL_INTERFACE:include>
 				PRIVATE
 					${libharu_SOURCE_DIR}/include
 				PRIVATE
