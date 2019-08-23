@@ -146,11 +146,11 @@ install(
   BUNDLE DESTINATION "."
 )
 
-if(WIN32 AND NOT CYGWIN)
-  foreach(addlib ${ADDITIONAL_LIBRARIES})
-    install(FILES ${addlib} DESTINATION lib)
-  endforeach()
-endif()
+# if(WIN32 AND NOT CYGWIN)
+#   foreach(addlib ${ADDITIONAL_LIBRARIES})
+#     install(FILES ${addlib} DESTINATION lib)
+#   endforeach()
+# endif()
 
 include(CMakePackageConfigHelpers)
 
