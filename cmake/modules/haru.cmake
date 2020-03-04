@@ -21,7 +21,6 @@ check_include_files(sys/stat.h LIBHPDF_HAVE_SYS_STAT_H)
 check_include_files(sys/types.h LIBHPDF_HAVE_SYS_TYPES_H)
 check_include_files(unistd.h LIBHPDF_HAVE_UNISTD_H)
 
-
 # =======================================================================
 # additional library support
 # =======================================================================
@@ -31,7 +30,7 @@ if(NOT WIN32)
   find_library(MATH_LIB NAMES m PATHS /usr/local/lib /usr/lib)
   if(NOT MATH_LIB)
     message(FATAL_ERROR "Cannot find required math library")
-  endif(NOT MATH_LIB)
-else(NOT WIN32)
+  endif()
+else()
   set(MATH_LIB)
-endif(NOT WIN32)
+endif()
